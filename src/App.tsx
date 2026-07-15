@@ -201,13 +201,22 @@ export default function App() {
 
   // Estado para la instalación de PWA (Instalar App en el celular)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallBanner, setShowInstallBanner] = useState<boolean>(true);
+  const [showInstallBanner, setShowInstallBanner] = useState<boolean>(() => {
+    return localStorage.getItem('pwa_banner_dismissed') !== 'true';
+  });
+
+  const dismissInstallBanner = () => {
+    localStorage.setItem('pwa_banner_dismissed', 'true');
+    setShowInstallBanner(false);
+  };
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowInstallBanner(true);
+      if (localStorage.getItem('pwa_banner_dismissed') !== 'true') {
+        setShowInstallBanner(true);
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -228,6 +237,7 @@ export default function App() {
       const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
       if (isiOS) {
         triggerToast("En iPhone/iOS: toca 'Compartir' y luego 'Añadir a pantalla de inicio'.");
+        dismissInstallBanner();
       } else {
         triggerToast("Para instalar: abre el menú de opciones del navegador y selecciona 'Instalar aplicación'.");
       }
@@ -238,7 +248,7 @@ export default function App() {
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         triggerToast("¡Gracias por instalar nuestra aplicación!");
-        setShowInstallBanner(false);
+        dismissInstallBanner();
       }
     } catch (err) {
       console.warn("PWA prompt error:", err);
@@ -690,36 +700,42 @@ function leerTodosLosProductos() {
 
               {/* Banner de Instalación PWA */}
               {showInstallBanner && (
-                <div className="mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl p-4 shadow-lg shadow-blue-500/10 relative overflow-hidden flex flex-col gap-3">
+                <div className="mb-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-3xl p-4.5 shadow-xl shadow-blue-500/10 relative overflow-hidden flex flex-col gap-3.5 border border-blue-500/20">
+                  {/* Círculo decorativo de fondo */}
+                  <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/5 rounded-full pointer-events-none" />
+                  
                   <button 
-                    onClick={() => setShowInstallBanner(false)}
-                    className="absolute top-2 right-2 p-1 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                    onClick={dismissInstallBanner}
+                    className="absolute top-2.5 right-2.5 p-1 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                    title="Cerrar"
                   >
                     <X className="w-4 h-4" />
                   </button>
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-white/15 rounded-xl shrink-0 mt-0.5">
+
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/10 rounded-xl shrink-0 border border-white/10 shadow-inner">
                       <Smartphone className="w-5 h-5 text-white" />
                     </div>
-                    <div className="pr-5">
-                      <h3 className="text-xs font-bold">📲 ¡Instala esta App en tu Celular!</h3>
-                      <p className="text-[10px] text-blue-100 mt-1 leading-relaxed">
-                        Accede de forma rápida desde tu pantalla de inicio como una aplicación nativa, incluso sin conexión.
+                    <div>
+                      <h3 className="text-xs font-bold tracking-tight">Precios Vicario en tu Celular</h3>
+                      <p className="text-[10px] text-blue-100/90 mt-0.5 leading-tight">
+                        Accede al instante desde tu pantalla de inicio.
                       </p>
                     </div>
                   </div>
+
                   <div className="flex gap-2">
                     <button
                       onClick={handleInstallApp}
-                      className="flex-1 bg-white text-blue-600 hover:bg-neutral-50 text-[11px] font-bold py-2 px-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                      className="flex-1 bg-white text-blue-700 hover:bg-neutral-50 text-sm font-extrabold py-3 px-4 rounded-xl transition-all shadow-md shadow-blue-900/10 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
                     >
-                      <span>Instalar Aplicación</span>
+                      <span>Instalar</span>
                     </button>
                     <button
-                      onClick={() => setShowInstallBanner(false)}
-                      className="bg-white/10 hover:bg-white/15 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition-all flex items-center justify-center cursor-pointer"
+                      onClick={dismissInstallBanner}
+                      className="bg-white/10 hover:bg-white/15 text-white/90 text-xs font-semibold py-3 px-4 rounded-xl transition-all flex items-center justify-center cursor-pointer border border-white/5"
                     >
-                      Quizás más tarde
+                      Ocultar
                     </button>
                   </div>
                 </div>
