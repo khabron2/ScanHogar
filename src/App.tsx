@@ -151,12 +151,17 @@ export default function App() {
   // Estado de navegación: 'inicio' | 'novedades' | 'guia'
   const [activeTab, setActiveTab] = useState<'inicio' | 'novedades' | 'guia'>('inicio');
   
+  // URL por defecto provista para la hoja de cálculo de Google
+  const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxTzEeKZf0E-1nVsl1kjqhCfjYF-zg3LLKRAjqhPWVrtSLlhmG36J7ZHj_DSJJ4-4YhTQ/exec';
+
   // Estados de datos
   const [appsScriptUrl, setAppsScriptUrl] = useState<string>(() => {
-    return localStorage.getItem('apps_script_url') || '';
+    return localStorage.getItem('apps_script_url') || DEFAULT_SCRIPT_URL;
   });
   const [useLiveSheet, setUseLiveSheet] = useState<boolean>(() => {
-    return localStorage.getItem('use_live_sheet') === 'true' && !!localStorage.getItem('apps_script_url');
+    const saved = localStorage.getItem('use_live_sheet');
+    if (saved === null) return true; // Sincronización automática activada por defecto
+    return saved === 'true';
   });
   const [manualCode, setManualCode] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -193,6 +198,53 @@ export default function App() {
     localStorage.setItem('apps_script_url', appsScriptUrl);
     localStorage.setItem('use_live_sheet', String(useLiveSheet));
   }, [appsScriptUrl, useLiveSheet]);
+
+  // Estado para la instalación de PWA (Instalar App en el celular)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState<boolean>(true);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Si la app ya está corriendo instalada, ocultamos el banner por defecto
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      setShowInstallBanner(false);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) {
+      // Mensaje de ayuda si es iOS o no se ha disparado el prompt nativo
+      const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      if (isiOS) {
+        triggerToast("En iPhone/iOS: toca 'Compartir' y luego 'Añadir a pantalla de inicio'.");
+      } else {
+        triggerToast("Para instalar: abre el menú de opciones del navegador y selecciona 'Instalar aplicación'.");
+      }
+      return;
+    }
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        triggerToast("¡Gracias por instalar nuestra aplicación!");
+        setShowInstallBanner(false);
+      }
+    } catch (err) {
+      console.warn("PWA prompt error:", err);
+    }
+    setDeferredPrompt(null);
+  };
 
   // Cargar novedades al arrancar o cambiar configuración
   useEffect(() => {
@@ -258,7 +310,7 @@ export default function App() {
           setProductNotFound(true);
         }
       } catch (err) {
-        console.error("Error buscando en Google Sheets:", err);
+        console.warn("Información de red (búsqueda en Google Sheets):", err);
         triggerToast("Error de conexión. Mostrando datos Demo.");
         
         // Fallback a mock data para que la app nunca quede colgada si el script del cliente falla
@@ -301,7 +353,7 @@ export default function App() {
           triggerToast("Respuesta inválida de novedades.");
         }
       } catch (err) {
-        console.error("Error cargando novedades de Google Sheets:", err);
+        console.warn("Información de red (cargando novedades de Google Sheets):", err);
         setNovedades(PRODUCTOS_MOCK);
       } finally {
         setIsNovedadesLoading(false);
@@ -453,7 +505,7 @@ export default function App() {
         advanced: [{ torch: nextFlashState } as any]
       });
     } catch (err) {
-      console.error("Error toggling flash:", err);
+      console.warn("Información de red (Error toggling flash):", err);
       setIsFlashOn(false);
     }
   };
@@ -593,26 +645,17 @@ function leerTodosLosProductos() {
               <Barcode className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-neutral-900 leading-none">PreciosSheet</h1>
+              <h1 className="text-sm font-bold text-neutral-900 leading-none">NUEVO ESTILO HOME</h1>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <div className={`w-1.5 h-1.5 rounded-full ${useLiveSheet ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
-                <span className="text-[9px] font-medium text-neutral-400">
-                  {useLiveSheet ? 'Google Sheets En Vivo' : 'Modo Demostración'}
+                <span className="text-[9px] font-semibold text-neutral-500">
+                  Vicario Segura N° 1063
                 </span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5">
-            {/* Guía de instalación */}
-            <button 
-              onClick={() => setActiveTab(activeTab === 'guia' ? 'inicio' : 'guia')}
-              className={`p-2 rounded-xl transition-colors ${activeTab === 'guia' ? 'bg-blue-50 text-blue-600' : 'bg-neutral-50 text-neutral-500 hover:text-neutral-800'}`}
-              title="Guía de Instalación Google Sheets"
-            >
-              <BookOpen className="w-4 h-4" />
-            </button>
-            
             {/* Ajustes de Google Sheet */}
             <button 
               onClick={() => {
@@ -644,6 +687,43 @@ function leerTodosLosProductos() {
                   Escanea el código de barras de cualquier producto para ver su precio, unidad y stock al instante.
                 </p>
               </div>
+
+              {/* Banner de Instalación PWA */}
+              {showInstallBanner && (
+                <div className="mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl p-4 shadow-lg shadow-blue-500/10 relative overflow-hidden flex flex-col gap-3">
+                  <button 
+                    onClick={() => setShowInstallBanner(false)}
+                    className="absolute top-2 right-2 p-1 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-white/15 rounded-xl shrink-0 mt-0.5">
+                      <Smartphone className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="pr-5">
+                      <h3 className="text-xs font-bold">📲 ¡Instala esta App en tu Celular!</h3>
+                      <p className="text-[10px] text-blue-100 mt-1 leading-relaxed">
+                        Accede de forma rápida desde tu pantalla de inicio como una aplicación nativa, incluso sin conexión.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleInstallApp}
+                      className="flex-1 bg-white text-blue-600 hover:bg-neutral-50 text-[11px] font-bold py-2 px-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                    >
+                      <span>Instalar Aplicación</span>
+                    </button>
+                    <button
+                      onClick={() => setShowInstallBanner(false)}
+                      className="bg-white/10 hover:bg-white/15 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition-all flex items-center justify-center cursor-pointer"
+                    >
+                      Quizás más tarde
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Botón de Escaneo de Cámara */}
               <button 
@@ -1268,7 +1348,19 @@ function leerTodosLosProductos() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-neutral-600 block mb-1.5">Google Apps Script Web App URL</label>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="text-xs font-bold text-neutral-600 block">Google Apps Script Web App URL</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTempUrl(DEFAULT_SCRIPT_URL);
+                        triggerToast("Cargada URL oficial predeterminada");
+                      }}
+                      className="text-[10px] text-blue-600 hover:text-blue-700 font-bold hover:underline cursor-pointer"
+                    >
+                      Usar predeterminada
+                    </button>
+                  </div>
                   <input 
                     type="text"
                     value={tempUrl}
@@ -1277,7 +1369,7 @@ function leerTodosLosProductos() {
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono"
                   />
                   <span className="text-[9px] text-neutral-400 mt-1.5 leading-relaxed block">
-                    Debe ser la URL generada al publicar el Apps Script (&quot;Nueva implementación&quot; &rarr; &quot;Aplicación web&quot;).
+                    Sincronizada con la hoja oficial. Si la cambias, puedes regresar a la predeterminada con un toque.
                   </span>
                 </div>
               </div>

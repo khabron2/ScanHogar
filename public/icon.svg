@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#blueGrad)" />
+  
+  <!-- Barcode scanner graphic inside -->
+  <g transform="translate(96, 96)" fill="#ffffff">
+    <!-- Outer bracket/frame to represent scanning -->
+    <path d="M 0 40 L 0 0 L 40 0" fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 280 40 L 280 0 L 240 0" fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 0 280 L 0 320 L 40 320" fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 280 280 L 280 320 L 240 320" fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- Barcode lines -->
+    <rect x="50" y="70" width="16" height="180" rx="6" />
+    <rect x="80" y="70" width="32" height="180" rx="6" />
+    <rect x="130" y="70" width="16" height="180" rx="6" />
+    <rect x="160" y="70" width="48" height="180" rx="6" />
+    <rect x="220" y="70" width="16" height="180" rx="6" />
+    <rect x="250" y="70" width="16" height="180" rx="6" />
+  </g>
+
+  <!-- Bright red active laser scan line across the middle -->
+  <line x1="64" y1="256" x2="448" y2="256" stroke="#ef4444" stroke-width="16" stroke-linecap="round" />
+  <!-- Laser glow -->
+  <line x1="80" y1="256" x2="432" y2="256" stroke="#f87171" stroke-width="8" stroke-linecap="round" opacity="0.8" />
+</svg>
