@@ -147,27 +147,6 @@ const PRODUCTOS_MOCK: Producto[] = [
   }
 ];
 
-// Helper para interactuar con localStorage de forma segura ante restricciones de iframe o navegación privada
-const safeLocalStorage = {
-  getItem: (key: string): string | null => {
-    try {
-      return typeof window !== 'undefined' && window.localStorage ? localStorage.getItem(key) : null;
-    } catch (e) {
-      console.warn("localStorage.getItem falló debido a restricciones de iframe o privacidad:", e);
-      return null;
-    }
-  },
-  setItem: (key: string, value: string): void => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem(key, value);
-      }
-    } catch (e) {
-      console.warn("localStorage.setItem falló debido a restricciones de iframe o privacidad:", e);
-    }
-  }
-};
-
 export default function App() {
   // Estado de navegación: 'inicio' | 'novedades' | 'guia'
   const [activeTab, setActiveTab] = useState<'inicio' | 'novedades' | 'guia'>('inicio');
@@ -177,10 +156,10 @@ export default function App() {
 
   // Estados de datos
   const [appsScriptUrl, setAppsScriptUrl] = useState<string>(() => {
-    return safeLocalStorage.getItem('apps_script_url') || DEFAULT_SCRIPT_URL;
+    return localStorage.getItem('apps_script_url') || DEFAULT_SCRIPT_URL;
   });
   const [useLiveSheet, setUseLiveSheet] = useState<boolean>(() => {
-    const saved = safeLocalStorage.getItem('use_live_sheet');
+    const saved = localStorage.getItem('use_live_sheet');
     if (saved === null) return true; // Sincronización automática activada por defecto
     return saved === 'true';
   });
@@ -216,66 +195,9 @@ export default function App() {
 
   // Guardar configuración en localStorage
   useEffect(() => {
-    safeLocalStorage.setItem('apps_script_url', appsScriptUrl);
-    safeLocalStorage.setItem('use_live_sheet', String(useLiveSheet));
+    localStorage.setItem('apps_script_url', appsScriptUrl);
+    localStorage.setItem('use_live_sheet', String(useLiveSheet));
   }, [appsScriptUrl, useLiveSheet]);
-
-  // Estado para la instalación de PWA (Instalar App en el celular)
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallBanner, setShowInstallBanner] = useState<boolean>(() => {
-    return safeLocalStorage.getItem('pwa_banner_dismissed') !== 'true';
-  });
-
-  const dismissInstallBanner = () => {
-    safeLocalStorage.setItem('pwa_banner_dismissed', 'true');
-    setShowInstallBanner(false);
-  };
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      if (safeLocalStorage.getItem('pwa_banner_dismissed') !== 'true') {
-        setShowInstallBanner(true);
-      }
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // Si la app ya está corriendo instalada, ocultamos el banner por defecto
-    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-      setShowInstallBanner(false);
-    }
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  const handleInstallApp = async () => {
-    if (!deferredPrompt) {
-      // Mensaje de ayuda si es iOS o no se ha disparado el prompt nativo
-      const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-      if (isiOS) {
-        triggerToast("En iPhone/iOS: toca 'Compartir' y luego 'Añadir a pantalla de inicio'.");
-        dismissInstallBanner();
-      } else {
-        triggerToast("Para instalar: abre el menú de opciones del navegador y selecciona 'Instalar aplicación'.");
-      }
-      return;
-    }
-    try {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        triggerToast("¡Gracias por instalar nuestra aplicación!");
-        dismissInstallBanner();
-      }
-    } catch (err) {
-      console.warn("PWA prompt error:", err);
-    }
-    setDeferredPrompt(null);
-  };
 
   // Cargar novedades al arrancar o cambiar configuración
   useEffect(() => {
@@ -718,49 +640,6 @@ function leerTodosLosProductos() {
                   Escanea el código de barras de cualquier producto para ver su precio, unidad y stock al instante.
                 </p>
               </div>
-
-              {/* Banner de Instalación PWA */}
-              {showInstallBanner && (
-                <div className="mb-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-3xl p-4.5 shadow-xl shadow-blue-500/10 relative overflow-hidden flex flex-col gap-3.5 border border-blue-500/20">
-                  {/* Círculo decorativo de fondo */}
-                  <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/5 rounded-full pointer-events-none" />
-                  
-                  <button 
-                    onClick={dismissInstallBanner}
-                    className="absolute top-2.5 right-2.5 p-1 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
-                    title="Cerrar"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white/10 rounded-xl shrink-0 border border-white/10 shadow-inner">
-                      <Smartphone className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xs font-bold tracking-tight">Precios Vicario en tu Celular</h3>
-                      <p className="text-[10px] text-blue-100/90 mt-0.5 leading-tight">
-                        Accede al instante desde tu pantalla de inicio.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleInstallApp}
-                      className="flex-1 bg-white text-blue-700 hover:bg-neutral-50 text-sm font-extrabold py-3 px-4 rounded-xl transition-all shadow-md shadow-blue-900/10 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
-                    >
-                      <span>Instalar</span>
-                    </button>
-                    <button
-                      onClick={dismissInstallBanner}
-                      className="bg-white/10 hover:bg-white/15 text-white/90 text-xs font-semibold py-3 px-4 rounded-xl transition-all flex items-center justify-center cursor-pointer border border-white/5"
-                    >
-                      Ocultar
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* Botón de Escaneo de Cámara */}
               <button 
