@@ -147,6 +147,27 @@ const PRODUCTOS_MOCK: Producto[] = [
   }
 ];
 
+// Helper para interactuar con localStorage de forma segura ante restricciones de iframe o navegación privada
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      return typeof window !== 'undefined' && window.localStorage ? localStorage.getItem(key) : null;
+    } catch (e) {
+      console.warn("localStorage.getItem falló debido a restricciones de iframe o privacidad:", e);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(key, value);
+      }
+    } catch (e) {
+      console.warn("localStorage.setItem falló debido a restricciones de iframe o privacidad:", e);
+    }
+  }
+};
+
 export default function App() {
   // Estado de navegación: 'inicio' | 'novedades' | 'guia'
   const [activeTab, setActiveTab] = useState<'inicio' | 'novedades' | 'guia'>('inicio');
@@ -156,10 +177,10 @@ export default function App() {
 
   // Estados de datos
   const [appsScriptUrl, setAppsScriptUrl] = useState<string>(() => {
-    return localStorage.getItem('apps_script_url') || DEFAULT_SCRIPT_URL;
+    return safeLocalStorage.getItem('apps_script_url') || DEFAULT_SCRIPT_URL;
   });
   const [useLiveSheet, setUseLiveSheet] = useState<boolean>(() => {
-    const saved = localStorage.getItem('use_live_sheet');
+    const saved = safeLocalStorage.getItem('use_live_sheet');
     if (saved === null) return true; // Sincronización automática activada por defecto
     return saved === 'true';
   });
@@ -195,18 +216,18 @@ export default function App() {
 
   // Guardar configuración en localStorage
   useEffect(() => {
-    localStorage.setItem('apps_script_url', appsScriptUrl);
-    localStorage.setItem('use_live_sheet', String(useLiveSheet));
+    safeLocalStorage.setItem('apps_script_url', appsScriptUrl);
+    safeLocalStorage.setItem('use_live_sheet', String(useLiveSheet));
   }, [appsScriptUrl, useLiveSheet]);
 
   // Estado para la instalación de PWA (Instalar App en el celular)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState<boolean>(() => {
-    return localStorage.getItem('pwa_banner_dismissed') !== 'true';
+    return safeLocalStorage.getItem('pwa_banner_dismissed') !== 'true';
   });
 
   const dismissInstallBanner = () => {
-    localStorage.setItem('pwa_banner_dismissed', 'true');
+    safeLocalStorage.setItem('pwa_banner_dismissed', 'true');
     setShowInstallBanner(false);
   };
 
@@ -214,7 +235,7 @@ export default function App() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      if (localStorage.getItem('pwa_banner_dismissed') !== 'true') {
+      if (safeLocalStorage.getItem('pwa_banner_dismissed') !== 'true') {
         setShowInstallBanner(true);
       }
     };
