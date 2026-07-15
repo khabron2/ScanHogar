@@ -1,0 +1,66 @@
+<!-- SECCIÓN 2: ESCÁNER / CÁMARA (Superpuesta) -->
+<div id="scanner-container" class="hidden fixed inset-0 z-50 bg-neutral-900 flex flex-col justify-between">
+  
+  <!-- Cabecera del Escáner -->
+  <div class="px-6 py-5 flex items-center justify-between border-b border-neutral-800 bg-neutral-950/80 backdrop-blur-md">
+    <div class="flex items-center gap-3">
+      <div class="p-2 bg-neutral-800 text-blue-400 rounded-xl">
+        <i data-lucide="scan" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <h2 class="text-sm font-bold text-white">Lector de Códigos</h2>
+        <p class="text-[10px] text-neutral-400">Enfoca el código de barras</p>
+      </div>
+    </div>
+    <button id="btn-cerrar-escaner" class="p-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white rounded-full transition-colors">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+  </div>
+
+  <!-- Zona de Visualización de la Cámara -->
+  <div class="flex-1 flex flex-col justify-center items-center relative overflow-hidden bg-neutral-950">
+    
+    <!-- Contenedor del Lector de html5-qrcode -->
+    <div id="interactive-scanner" class="w-full h-full max-w-sm max-h-[70vh] flex items-center justify-center relative">
+      <!-- El lector html5-qrcode se renderizará aquí -->
+      <div id="reader" class="w-full h-full [&>div]:border-none [&_video]:object-cover [&_video]:rounded-none"></div>
+    </div>
+
+    <!-- Guía Visual Sobrepuesta (Scanner Target Frame) -->
+    <div class="absolute inset-0 pointer-events-none flex flex-col justify-center items-center p-6">
+      <!-- Máscara exterior oscura -->
+      <div class="w-full max-w-[280px] aspect-[2/1.2] border-2 border-dashed border-blue-500/80 rounded-2xl relative shadow-[0_0_0_9999px_rgba(10,10,10,0.65)] flex justify-center items-center animate-pulse-slow">
+        <!-- Esquinas sólidas estilizadas -->
+        <div class="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-blue-500 -mt-1 -ml-1 rounded-tl-lg"></div>
+        <div class="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-blue-500 -mt-1 -mr-1 rounded-tr-lg"></div>
+        <div class="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-blue-500 -mb-1 -ml-1 rounded-bl-lg"></div>
+        <div class="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-blue-500 -mb-1 -mr-1 rounded-br-lg"></div>
+
+        <!-- Línea de escaneo láser animada -->
+        <div class="w-[90%] h-0.5 bg-red-500 shadow-[0_0_8px_#ef4444] absolute animate-laser"></div>
+      </div>
+      
+      <!-- Indicaciones -->
+      <p class="text-xs font-medium text-blue-200 mt-8 text-center bg-neutral-950/80 px-4 py-2 rounded-full backdrop-blur-sm max-w-[80%]">
+        EAN13, EAN8, UPC, Code128 o QR
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Pie de Página del Escáner / Alternar Linterna -->
+  <div class="px-6 py-6 bg-neutral-950 border-t border-neutral-900 flex flex-col gap-4">
+    <div class="flex items-center justify-center gap-4">
+      <button id="btn-toggle-flash" class="flex-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white py-3 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+        <i data-lucide="zap" class="w-4 h-4"></i>
+        <span>Encender Linterna</span>
+      </button>
+      <button id="btn-switch-camera" class="flex-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white py-3 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+        <i data-lucide="camera-off" class="w-4 h-4"></i>
+        <span>Cambiar Cámara</span>
+      </button>
+    </div>
+    <p class="text-[10px] text-neutral-500 text-center">Permite el acceso a tu cámara para poder escanear</p>
+  </div>
+
+</div>

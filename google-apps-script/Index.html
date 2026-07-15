@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Consulta de Precios</title>
+  
+  <!-- Tailwind CSS CDN para un diseño moderno -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Configuración personalizada de Tailwind -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            mercadoLibre: '#FFF159',
+            brandGreen: '#34A853',
+            brandBlue: '#4285F4',
+            bgGray: '#F5F5F7',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Lucide Icons para iconos modernos -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Librería para escaneo de códigos de barra -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  
+  <!-- Estilos Personalizados -->
+  <?!= HtmlService.createHtmlOutputFromFile('Styles').getContent(); ?>
+</head>
+<body class="bg-[#F5F5F7] font-sans text-neutral-800 flex justify-center min-h-screen">
+
+  <!-- Contenedor Principal (Mobile-First Max Width) -->
+  <div class="w-full max-w-md bg-white flex flex-col relative min-h-screen shadow-md pb-24 overflow-x-hidden">
+    
+    <!-- Toast de Notificaciones -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-neutral-900 text-white text-sm px-4 py-3 rounded-full opacity-0 pointer-events-none transition-all duration-300 shadow-lg flex items-center gap-2 max-w-[90%]">
+      <span id="toast-message">Mensaje</span>
+    </div>
+
+    <!-- PWA Install Banner -->
+    <div id="install-banner" class="hidden bg-blue-50 border-b border-blue-100 p-4 flex items-center justify-between gap-3 animate-fade-in">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-blue-100 text-blue-600 rounded-xl">
+          <i data-lucide="smartphone" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h4 class="text-xs font-semibold text-blue-900">Instalar Aplicación</h4>
+          <p class="text-[10px] text-blue-600">Accede más rápido desde tu pantalla</p>
+        </div>
+      </div>
+      <button id="btn-install" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+        Instalar
+      </button>
+    </div>
+
+    <!-- SECCIÓN 1: INICIO (Consulta de Precios) -->
+    <section id="inicio-view" class="flex-1 flex flex-col p-6 animate-fade-in">
+      
+      <!-- Cabecera / Logo -->
+      <div class="flex flex-col items-center mt-6 mb-8 text-center">
+        <div class="w-16 h-16 bg-[#E8F0FE] text-blue-600 rounded-3xl flex items-center justify-center shadow-sm mb-4">
+          <i data-lucide="barcode-scanner" class="w-8 h-8 text-blue-600" style="stroke-width: 1.5px"></i>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-neutral-900">Consulta de Precios</h1>
+        <p class="text-xs text-neutral-500 mt-1">Escanear código de barras para ver precio y stock</p>
+      </div>
+
+      <!-- Botón de Escaneo Grande -->
+      <div class="mb-10">
+        <button id="btn-abrir-escaner" class="w-full aspect-[4/3] bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border-2 border-dashed border-blue-200 rounded-[32px] flex flex-col items-center justify-center p-6 transition-all duration-300 group active:scale-[0.98]">
+          <div class="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md shadow-blue-200 mb-4 group-hover:scale-105 transition-transform">
+            <i data-lucide="camera" class="w-8 h-8"></i>
+          </div>
+          <span class="text-base font-semibold text-blue-950">Escanear Código</span>
+          <span class="text-xs text-blue-600 mt-1">Usar la cámara de tu celular</span>
+        </button>
+      </div>
+
+      <!-- Divisor -->
+      <div class="relative flex py-2 items-center mb-6">
+        <div class="flex-grow border-t border-neutral-200"></div>
+        <span class="flex-shrink mx-4 text-[11px] text-neutral-400 font-medium tracking-wider uppercase">o ingresar manualmente</span>
+        <div class="flex-grow border-t border-neutral-200"></div>
+      </div>
+
+      <!-- Caja de Búsqueda Manual -->
+      <div class="flex flex-col gap-2 mb-8">
+        <div class="relative flex items-center">
+          <span class="absolute left-4 text-neutral-400">
+            <i data-lucide="keyboard" class="w-5 h-5"></i>
+          </span>
+          <input type="text" id="input-codigo" placeholder="Escribe el código de barras..." class="w-full pl-12 pr-4 py-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" inputmode="numeric">
+          <button id="btn-limpiar-busqueda" class="absolute right-4 text-neutral-400 hover:text-neutral-600 hidden">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <button id="btn-buscar" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-2xl text-sm shadow-md shadow-blue-100 active:scale-[0.99] transition-all flex items-center justify-center gap-2">
+          <i data-lucide="search" class="w-4 h-4"></i>
+          Buscar Producto
+        </button>
+      </div>
+
+    </section>
+
+    <!-- SECCIÓN 2: ESCÁNER / CÁMARA (Superpuesto o Inline) -->
+    <?!= HtmlService.createHtmlOutputFromFile('Scanner').getContent(); ?>
+
+    <!-- SECCIÓN 3: NOVEDADES (Últimos Productos) -->
+    <?!= HtmlService.createHtmlOutputFromFile('Novedades').getContent(); ?>
+
+    <!-- DETALLE DEL PRODUCTO (Modal / Vista de Detalle) -->
+    <div id="detalle-producto-container" class="hidden fixed inset-0 z-40 bg-neutral-900/40 flex flex-col justify-end animate-fade-in-up">
+      <div class="w-full max-w-md bg-white rounded-t-[32px] overflow-hidden max-h-[92vh] flex flex-col relative mx-auto shadow-2xl">
+        <!-- Barra superior de arrastre / cerrar -->
+        <div class="w-full py-3 flex justify-center items-center relative border-b border-neutral-100">
+          <div class="w-12 h-1 bg-neutral-200 rounded-full"></div>
+          <button id="btn-cerrar-detalle" class="absolute right-4 p-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-500 rounded-full transition-colors">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="overflow-y-auto flex-1">
+          <!-- Contenido de Detalle del Producto -->
+          <div id="detalle-producto-content" class="p-6">
+            <!-- Skeleton Loader -->
+            <div id="detalle-skeleton" class="hidden animate-pulse">
+              <div class="w-full aspect-video bg-neutral-100 rounded-2xl mb-6"></div>
+              <div class="h-4 bg-neutral-100 rounded w-1/4 mb-3"></div>
+              <div class="h-6 bg-neutral-100 rounded w-3/4 mb-4"></div>
+              <div class="h-4 bg-neutral-100 rounded w-1/3 mb-6"></div>
+              <div class="h-10 bg-neutral-100 rounded w-1/2 mb-4"></div>
+              <div class="h-4 bg-neutral-100 rounded w-1/4"></div>
+            </div>
+
+            <!-- Datos del Producto -->
+            <div id="detalle-datos" class="animate-fade-in">
+              <!-- Foto (40% de pantalla aproximado) -->
+              <div class="w-full aspect-[4/3] bg-neutral-50 border border-neutral-100 rounded-[24px] overflow-hidden mb-6 flex items-center justify-center relative">
+                <img id="prod-foto" src="" alt="Foto de producto" class="w-full h-full object-contain p-4 transition-opacity duration-300 opacity-0" onload="this.classList.remove('opacity-0')">
+                <div id="prod-foto-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-neutral-50 text-neutral-300">
+                  <i data-lucide="image" class="w-16 h-16" style="stroke-width: 1px"></i>
+                  <span class="text-xs text-neutral-400 mt-2">Sin imagen</span>
+                </div>
+              </div>
+
+              <!-- Marca -->
+              <span id="prod-marca" class="inline-block px-3 py-1 bg-neutral-100 text-neutral-600 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2">Marca</span>
+
+              <!-- Descripción -->
+              <h2 id="prod-descripcion" class="text-xl font-bold text-neutral-900 leading-snug mb-1">Descripción del Producto</h2>
+              
+              <!-- Unidad -->
+              <p id="prod-unidad" class="text-xs text-neutral-500 mb-6 flex items-center gap-1.5">
+                <i data-lucide="package" class="w-3.5 h-3.5"></i>
+                <span>Contenido:</span> <strong id="prod-unidad-val" class="font-semibold text-neutral-700">-</strong>
+              </p>
+
+              <!-- Precio Destacado -->
+              <div class="bg-emerald-50/50 border border-emerald-100 p-5 rounded-2xl mb-5 flex flex-col justify-center">
+                <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1 block">Precio al Público</span>
+                <div id="prod-precio" class="text-3xl font-extrabold text-[#34A853] tracking-tight">$ 0.00</div>
+              </div>
+
+              <!-- Stock Disponible -->
+              <div id="prod-stock-container" class="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl">
+                <div id="prod-stock-icon" class="w-10 h-10 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-100">
+                  <i data-lucide="check-circle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <span class="text-[10px] text-neutral-500 font-medium block">Stock disponible</span>
+                  <span id="prod-stock-text" class="text-sm font-semibold text-neutral-800">18 unidades</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Producto No Encontrado -->
+            <div id="detalle-error" class="hidden flex flex-col items-center text-center py-6 animate-fade-in">
+              <div class="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mb-5">
+                <i data-lucide="package-search" class="w-10 h-10"></i>
+              </div>
+              <h3 class="text-lg font-bold text-neutral-900">Producto no encontrado</h3>
+              <p class="text-xs text-neutral-500 mt-2 max-w-[240px] leading-relaxed">El código escaneado o ingresado no se encuentra registrado en nuestra base de datos.</p>
+              <button id="btn-re-escanear" class="mt-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-2xl text-sm shadow-md shadow-blue-100 transition-all flex items-center gap-2">
+                <i data-lucide="scan" class="w-4 h-4"></i>
+                Escanear nuevamente
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENÚ DE NAVEGACIÓN INFERIOR (Pestañas Fijas) -->
+    <nav class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-neutral-200/80 px-8 py-3 flex justify-around items-center z-30 shadow-lg">
+      <!-- Botón Inicio -->
+      <button id="nav-inicio" class="flex flex-col items-center gap-1 text-blue-600 font-semibold transition-all">
+        <div class="w-12 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center transition-all duration-300">
+          <i data-lucide="house" class="w-5 h-5"></i>
+        </div>
+        <span class="text-[10px] tracking-wide">Inicio</span>
+      </button>
+
+      <!-- Botón Novedades -->
+      <button id="nav-novedades" class="flex flex-col items-center gap-1 text-neutral-400 hover:text-neutral-600 transition-all">
+        <div class="w-12 h-8 rounded-full bg-transparent text-neutral-400 flex items-center justify-center transition-all duration-300">
+          <i data-lucide="sparkles" class="w-5 h-5"></i>
+        </div>
+        <span class="text-[10px] tracking-wide">Novedades</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- Scripts -->
+  <?!= HtmlService.createHtmlOutputFromFile('Scripts').getContent(); ?>
+</body>
+</html>

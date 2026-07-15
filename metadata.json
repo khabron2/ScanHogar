@@ -1,0 +1,6 @@
+{
+  "name": "Consulta de Precios",
+  "description": "Web App PWA móvil para consultar precios de productos escaneando códigos de barras, integrada con Google Sheets y Google Apps Script.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

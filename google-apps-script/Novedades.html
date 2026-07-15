@@ -1,0 +1,65 @@
+<!-- SECCIÓN 3: NOVEDADES (Últimos Productos) -->
+<section id="novedades-view" class="hidden flex-1 flex flex-col p-6 animate-fade-in">
+  
+  <!-- Cabecera / Título -->
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold tracking-tight text-neutral-900 flex items-center gap-2">
+        Novedades
+        <span class="inline-flex items-center justify-center bg-blue-100 text-blue-700 text-[11px] font-bold px-2 py-0.5 rounded-full" id="novedades-count">0</span>
+      </h2>
+      <p class="text-xs text-neutral-500 mt-1">Los últimos 30 productos agregados al catálogo</p>
+    </div>
+    <button id="btn-actualizar-novedades" class="p-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-600 rounded-full transition-colors active:rotate-45 duration-300" title="Actualizar catálogo">
+      <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+    </button>
+  </div>
+
+  <!-- Skeletons para Novedades (Carga inicial) -->
+  <div id="novedades-skeletons" class="grid grid-cols-2 gap-4 mb-6">
+    <!-- Repetir 4 veces para simular la grilla -->
+    <div class="bg-white border border-neutral-100 rounded-2xl p-3 animate-pulse flex flex-col">
+      <div class="w-full aspect-square bg-neutral-100 rounded-xl mb-3"></div>
+      <div class="h-3 bg-neutral-100 rounded w-1/3 mb-2"></div>
+      <div class="h-4 bg-neutral-100 rounded w-3/4 mb-1"></div>
+      <div class="h-4 bg-neutral-100 rounded w-1/2 mb-4"></div>
+      <div class="h-5 bg-neutral-100 rounded w-2/3 mt-auto"></div>
+    </div>
+    <div class="bg-white border border-neutral-100 rounded-2xl p-3 animate-pulse flex flex-col">
+      <div class="w-full aspect-square bg-neutral-100 rounded-xl mb-3"></div>
+      <div class="h-3 bg-neutral-100 rounded w-1/3 mb-2"></div>
+      <div class="h-4 bg-neutral-100 rounded w-3/4 mb-1"></div>
+      <div class="h-4 bg-neutral-100 rounded w-1/2 mb-4"></div>
+      <div class="h-5 bg-neutral-100 rounded w-2/3 mt-auto"></div>
+    </div>
+    <div class="bg-white border border-neutral-100 rounded-2xl p-3 animate-pulse flex flex-col">
+      <div class="w-full aspect-square bg-neutral-100 rounded-xl mb-3"></div>
+      <div class="h-3 bg-neutral-100 rounded w-1/3 mb-2"></div>
+      <div class="h-4 bg-neutral-100 rounded w-3/4 mb-1"></div>
+      <div class="h-4 bg-neutral-100 rounded w-1/2 mb-4"></div>
+      <div class="h-5 bg-neutral-100 rounded w-2/3 mt-auto"></div>
+    </div>
+    <div class="bg-white border border-neutral-100 rounded-2xl p-3 animate-pulse flex flex-col">
+      <div class="w-full aspect-square bg-neutral-100 rounded-xl mb-3"></div>
+      <div class="h-3 bg-neutral-100 rounded w-1/3 mb-2"></div>
+      <div class="h-4 bg-neutral-100 rounded w-3/4 mb-1"></div>
+      <div class="h-4 bg-neutral-100 rounded w-1/2 mb-4"></div>
+      <div class="h-5 bg-neutral-100 rounded w-2/3 mt-auto"></div>
+    </div>
+  </div>
+
+  <!-- Contenedor Vacío si no hay novedades -->
+  <div id="novedades-vacio" class="hidden flex flex-col items-center justify-center text-center py-12 px-6">
+    <div class="w-16 h-16 bg-neutral-100 text-neutral-400 rounded-full flex items-center justify-center mb-4">
+      <i data-lucide="package-open" class="w-8 h-8"></i>
+    </div>
+    <h3 class="text-sm font-semibold text-neutral-800">Catálogo vacío</h3>
+    <p class="text-[11px] text-neutral-500 mt-1 max-w-[200px]">No se encontraron productos en la hoja "PRODUCTOS" de Google Sheets.</p>
+  </div>
+
+  <!-- Grilla de Tarjetas de Productos (Catálogo) -->
+  <div id="novedades-grid" class="hidden grid grid-cols-2 gap-4 mb-8">
+    <!-- El catálogo dinámico se renderizará aquí -->
+  </div>
+
+</section>
