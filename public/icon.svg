@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+  </defs>
+  <!-- Rounded Background -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+  <!-- Barcode pattern -->
+  <g fill="#ffffff" transform="translate(106, 110)">
+    <rect x="0" y="0" width="16" height="180" rx="4" />
+    <rect x="26" y="0" width="8" height="180" rx="2" />
+    <rect x="44" y="0" width="24" height="180" rx="4" />
+    <rect x="78" y="0" width="12" height="180" rx="3" />
+    <rect x="100" y="0" width="8" height="180" rx="2" />
+    <rect x="118" y="0" width="28" height="180" rx="4" />
+    <rect x="156" y="0" width="16" height="180" rx="4" />
+    <rect x="182" y="0" width="8" height="180" rx="2" />
+    <rect x="200" y="0" width="24" height="180" rx="4" />
+    <rect x="234" y="0" width="12" height="180" rx="3" />
+    <rect x="256" y="0" width="16" height="180" rx="4" />
+    <rect x="282" y="0" width="18" height="180" rx="4" />
+  </g>
+  <!-- Price tag superimposed at bottom right -->
+  <g transform="translate(240, 250) rotate(-15)">
+    <!-- Shadow -->
+    <path d="M 20 0 L 160 0 C 171 0 180 9 180 20 L 180 90 C 180 101 171 110 160 110 L 20 110 C 9 110 0 101 0 90 L 0 20 C 0 9 9 0 20 0 Z" fill="#10b981" />
+    <!-- Tag point and hole -->
+    <path d="M 0 55 L 40 15 L 40 95 Z" fill="#10b981" />
+    <circle cx="35" cy="55" r="10" fill="#ffffff" />
+    <!-- Price sign -->
+    <text x="70" y="75" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="52" fill="#ffffff">$</text>
+    <path d="M 115 45 L 155 45 M 115 65 L 155 65" stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
+  </g>
+</svg>

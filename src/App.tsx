@@ -150,6 +150,13 @@ const PRODUCTOS_MOCK: Producto[] = [
 export default function App() {
   // Estado de navegación: 'inicio' | 'novedades' | 'guia'
   const [activeTab, setActiveTab] = useState<'inicio' | 'novedades' | 'guia'>('inicio');
+
+  // Estados PWA para instalación de la App
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState<boolean>(false);
+  const [isIOS, setIsIOS] = useState<boolean>(false);
+  const [isStandalone, setIsStandalone] = useState<boolean>(false);
+  const [showIOSInstructions, setShowIOSInstructions] = useState<boolean>(false);
   
   // URL por defecto provista para la hoja de cálculo de Google
   const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxTzEeKZf0E-1nVsl1kjqhCfjYF-zg3LLKRAjqhPWVrtSLlhmG36J7ZHj_DSJJ4-4YhTQ/exec';
@@ -203,6 +210,52 @@ export default function App() {
   useEffect(() => {
     fetchNovedades();
   }, [useLiveSheet, appsScriptUrl]);
+
+  // Manejar eventos de instalación PWA (Instalar App)
+  useEffect(() => {
+    // Detectar si ya está instalada / modo autónomo
+    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    setIsStandalone(isStandaloneMode);
+
+    // Detectar iOS
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
+    setIsIOS(isIOSDevice);
+
+    // Mostrar banner en iOS si no está instalada y no se ha descartado antes
+    const dismissed = localStorage.getItem('install_banner_dismissed') === 'true';
+    if (isIOSDevice && !isStandaloneMode && !dismissed) {
+      setShowInstallBanner(true);
+    }
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      // Prevenir el comportamiento por defecto de algunos navegadores
+      e.preventDefault();
+      // Guardar el evento para poder dispararlo luego
+      setDeferredPrompt(e);
+      // Mostrar banner si no se ha descartado antes
+      const dismissed = localStorage.getItem('install_banner_dismissed') === 'true';
+      if (!dismissed && !isStandaloneMode) {
+        setShowInstallBanner(true);
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Escuchar cuando la app ha sido instalada exitosamente
+    const handleAppInstalled = () => {
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+      triggerToast("¡Aplicación instalada con éxito!");
+    };
+
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
 
   // Mostrar mensaje de toast temporal
   const triggerToast = (msg: string) => {
@@ -1288,6 +1341,30 @@ function leerTodosLosProductos() {
                     Sincronizada con la hoja oficial. Si la cambias, puedes regresar a la predeterminada con un toque.
                   </span>
                 </div>
+
+                {/* Opción de instalación manual si no está instalada */}
+                {!isStandalone && (
+                  <div className="border-t border-neutral-100 pt-4 mt-2">
+                    <label className="text-xs font-bold text-neutral-600 block mb-1.5">Instalar en tu Celular</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSettingsModal(false);
+                        if (isIOS) {
+                          setShowIOSInstructions(true);
+                        } else if (deferredPrompt) {
+                          deferredPrompt.prompt();
+                        } else {
+                          triggerToast("Por favor, abre el menú de opciones de tu navegador e instala la App.");
+                        }
+                      }}
+                      className="w-full bg-blue-50 border border-blue-100 text-blue-600 font-bold py-3 px-3 rounded-2xl text-xs flex items-center justify-center gap-1.5 hover:bg-blue-100 transition-colors cursor-pointer"
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      Instalar Aplicación en Pantalla de Inicio
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="px-6 py-4 bg-neutral-50 border-t border-neutral-100 flex gap-3">
@@ -1341,6 +1418,141 @@ function leerTodosLosProductos() {
           </button>
 
         </nav>
+
+        {/* BANNER FLOTANTE DE INSTALACIÓN PWA (AL ABRIR LA URL) */}
+        {showInstallBanner && !isStandalone && (
+          <div className="absolute bottom-22 left-4 right-4 z-30 bg-neutral-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-xl border border-neutral-800 flex flex-col gap-3 animate-fade-in">
+            <div className="flex gap-3 items-start">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
+                <Barcode className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start">
+                  <h4 className="text-xs font-bold text-white tracking-wide">¿Instalar en tu Pantalla de Inicio?</h4>
+                  <button 
+                    onClick={() => {
+                      setShowInstallBanner(false);
+                      localStorage.setItem('install_banner_dismissed', 'true');
+                      triggerToast("Puedes instalarla luego desde Configuración");
+                    }}
+                    className="text-neutral-400 hover:text-white p-0.5 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-[11px] text-neutral-300 leading-normal mt-0.5">
+                  Lleva el consultor de precios en tu celular. Acceso inmediato, escáner veloz y funciona sin internet.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => {
+                  setShowInstallBanner(false);
+                  localStorage.setItem('install_banner_dismissed', 'true');
+                  triggerToast("Puedes instalarla luego desde Configuración");
+                }}
+                className="flex-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold py-2 px-3 rounded-xl text-[11px] transition-all cursor-pointer text-center"
+              >
+                Más tarde
+              </button>
+              <button
+                onClick={async () => {
+                  if (isIOS) {
+                    setShowIOSInstructions(true);
+                  } else if (deferredPrompt) {
+                    try {
+                      deferredPrompt.prompt();
+                      const { outcome } = await deferredPrompt.userChoice;
+                      console.log(`PWA install outcome: ${outcome}`);
+                      setDeferredPrompt(null);
+                      setShowInstallBanner(false);
+                    } catch (err) {
+                      console.error("Error launching installation prompt:", err);
+                      triggerToast("Usa la opción de instalar de tu navegador.");
+                    }
+                  } else {
+                    triggerToast("Toca el menú de tu navegador y selecciona 'Instalar aplicación' o 'Agregar a pantalla principal'.");
+                  }
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-2 px-3 rounded-xl text-[11px] shadow-md shadow-blue-500/10 transition-all cursor-pointer text-center"
+              >
+                {isIOS ? 'Cómo Instalar' : 'Instalar'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* GUÍA DE INSTALACIÓN EN IOS */}
+        {showIOSInstructions && (
+          <div className="absolute inset-0 bg-neutral-950/80 flex items-end z-50 animate-fade-in" onClick={() => setShowIOSInstructions(false)}>
+            <div 
+              className="w-full bg-white rounded-t-[28px] p-5 pb-7 shadow-2xl animate-slide-up flex flex-col gap-3.5 text-neutral-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-12 h-1 bg-neutral-200 rounded-full mx-auto mb-1"></div>
+              
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">Instalar en Apple iOS</h3>
+                </div>
+                <button 
+                  onClick={() => setShowIOSInstructions(false)}
+                  className="p-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-500 rounded-full cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-[11px] text-neutral-500 leading-normal">
+                iOS Safari requiere añadir la aplicación manualmente a la pantalla de inicio en 3 simples pasos:
+              </p>
+
+              <div className="flex flex-col gap-3 my-1">
+                <div className="flex gap-3 items-start">
+                  <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</div>
+                  <div className="text-[11px]">
+                    <span className="font-semibold text-neutral-800">Toca el botón Compartir</span>
+                    <span className="text-neutral-500 block mt-0.5">
+                      Pulsa el ícono de compartir <ExternalLink className="w-3.5 h-3.5 text-blue-600 inline-block align-text-bottom" /> (cuadrado con flecha hacia arriba) en la barra inferior de Safari.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 items-start">
+                  <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</div>
+                  <div className="text-[11px]">
+                    <span className="font-semibold text-neutral-800">Selecciona "Añadir a la pantalla de inicio"</span>
+                    <span className="text-neutral-500 block mt-0.5">
+                      Desliza hacia abajo en las opciones de Safari y selecciona <strong className="text-neutral-700">Añadir a la pantalla de inicio</strong>.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 items-start">
+                  <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</div>
+                  <div className="text-[11px]">
+                    <span className="font-semibold text-neutral-800">Confirma pulsando "Añadir"</span>
+                    <span className="text-neutral-500 block mt-0.5">
+                      Pulsa <strong className="text-neutral-700">Añadir</strong> en la esquina superior derecha. ¡Y listo!
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowIOSInstructions(false)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md shadow-blue-100 transition-all cursor-pointer mt-1 text-center"
+              >
+                ¡Listo, entendido!
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
